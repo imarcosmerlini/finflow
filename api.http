@@ -1,0 +1,16 @@
+### Send POST request with json body
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "john",
+  "password": "changeme"
+}
+
+> {% client.global.set("access_token", response.body.access_token); %}
+
+
+### GET request with a header
+GET http://localhost:3000
+Accept: application/json
+Authorization: Bearer {{access_token}}
