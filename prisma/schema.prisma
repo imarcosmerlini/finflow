@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int            @id @unique @default(autoincrement())
+  name              String
+  document          String         @unique
+  email             String         @unique
+  password          String
+  emailNotification Boolean        @default(true) @map("email_notification")
+  smsNotification   Boolean        @default(true) @map("sms_notification")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime?      @map("updated_at")
+  to                Transaction[]  @relation("transaction_to")
+  from              Transaction[]  @relation("transaction_from")
+  sender            Notification[] @relation("notification_sender")
+  recipient         Notification[] @relation("notification_recipient")
+  wallet            Wallet[]
+
+  @@map("users")
+}
+
+model Transaction {
+  id              Int       @id @unique @default(autoincrement())
+  transactionToId Int
+  to              User      @relation("transaction_to", fields: [transactionToId], references: [id])
+  from            User[]    @relation("transaction_from")
+  amount          BigInt
+  status          String
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @map("updated_at")
+}
+
+model Wallet {
+  id        Int       @id @unique @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  amount    BigInt
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @map("updated_at")
+}
+
+model Notification {
+  id        Int      @id @unique @default(autoincrement())
+  senderId  Int
+  sender    User     @relation("notification_sender", fields: [senderId], references: [id])
+  recipient User[]   @relation("notification_recipient")
+  amount    BigInt
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+}
