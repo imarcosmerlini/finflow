@@ -15,7 +15,7 @@ CREATE TABLE "users" (
 CREATE TABLE "Transaction" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "transactionToId" INTEGER NOT NULL,
-    "amount" BIGINT NOT NULL,
+    "amount" DECIMAL NOT NULL,
     "status" TEXT NOT NULL,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME,
@@ -26,7 +26,7 @@ CREATE TABLE "Transaction" (
 CREATE TABLE "Wallet" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "userId" INTEGER NOT NULL,
-    "amount" BIGINT NOT NULL,
+    "amount" DECIMAL NOT NULL,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME,
     CONSTRAINT "Wallet_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
@@ -36,7 +36,7 @@ CREATE TABLE "Wallet" (
 CREATE TABLE "Notification" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "senderId" INTEGER NOT NULL,
-    "amount" BIGINT NOT NULL,
+    "amount" DECIMAL NOT NULL,
     "message" TEXT NOT NULL,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Notification_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "users" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
