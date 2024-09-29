@@ -34,7 +34,7 @@ export class AuthService {
           status: HttpStatus.UNAUTHORIZED,
           error: 'Incorrect password',
         },
-        HttpStatus.NOT_FOUND,
+        HttpStatus.UNAUTHORIZED,
         {
           cause: 'Incorrect password',
         },

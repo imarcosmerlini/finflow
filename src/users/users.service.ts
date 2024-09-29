@@ -1,25 +1,16 @@
-import { Injectable } from '@nestjs/common';
-// import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { User, Wallet } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
-
-// Only for tests, after will be the prisma
-export type IUser = {
-  id: number;
-  name: string;
-  document: string;
-  email: string;
-  password: string;
-  emailNotification: boolean;
-  smsNotification: boolean;
-  createdAt: string;
-  updatedAt: string;
-  type: string;
-};
+import { IUser } from './iuser';
+import { WalletsService } from '../wallets/wallets.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private wallet: WalletsService,
+  ) {}
   private readonly saltOrRounds = 10;
 
   async findOne(email: string): Promise<User | undefined> {
@@ -30,8 +21,41 @@ export class UsersService {
     });
   }
 
-  async create(): Promise<User | undefined> {
-    // const passwordHash = await bcrypt.hash(password, this.saltOrRounds);
+  async create(user: IUser): Promise<User | any> {
+    const isUnique = await this.prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            email: user.email,
+          },
+          {
+            document: user.document,
+          },
+        ],
+      },
+    });
+
+    if (isUnique.length === 0) {
+      user.password = await bcrypt.hash(user.password, this.saltOrRounds);
+      const newUser = await this.prisma.user.create({ data: user });
+      await this.wallet.create({ userId: newUser.id, amount: 0 });
+
+      return newUser;
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.NOT_FOUND,
+          error: 'User already created',
+        },
+        HttpStatus.NOT_FOUND,
+        {
+          cause: 'User already created',
+        },
+      );
+    }
+  }
+
+  async addFunds(): Promise<Wallet | undefined> {
     return undefined;
   }
 }
