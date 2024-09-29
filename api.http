@@ -29,3 +29,12 @@ Content-Type: application/json
   "email": "2414214@noreply.com",
   "password": "changeme"
 }
+
+### POST wallet
+POST http://localhost:3000/wallets
+Content-Type: application/json
+
+{
+  "id": 2,
+  "amount": 2.6
+}
