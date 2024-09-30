@@ -8,51 +8,44 @@ datasource db {
 }
 
 model User {
-  id                Int            @id @unique @default(autoincrement())
+  id                Int       @id @unique @default(autoincrement())
   name              String
-  document          String         @unique
-  email             String         @unique
+  document          String    @unique
+  email             String    @unique
   password          String
-  emailNotification Boolean        @default(true) @map("email_notification")
-  smsNotification   Boolean        @default(true) @map("sms_notification")
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime?      @map("updated_at")
+  emailNotification Boolean   @default(true) @map("email_notification")
+  smsNotification   Boolean   @default(true) @map("sms_notification")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime? @map("updated_at")
   type              String
-  sender            Notification[] @relation("notification_sender")
-  to                Transaction[]  @relation("transaction_to")
-  wallet            Wallet[]
-  recipient         Notification[] @relation("notification_recipient")
-  from              Transaction[]  @relation("transaction_from")
 
   @@map("users")
 }
 
 model Transaction {
-  id              Int       @id @unique @default(autoincrement())
-  transactionToId Int
-  amount          Decimal
-  status          String
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime? @map("updated_at")
-  to              User      @relation("transaction_to", fields: [transactionToId], references: [id])
-  from            User[]    @relation("transaction_from")
+  id                Int       @id @unique @default(autoincrement())
+  transactionToId   Int       @map("transaction_to_id")
+  transactionFromId Int       @map("transaction_from_id")
+  amount            Float
+  status            String?   @default("pending")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime? @map("updated_at")
 }
 
 model Wallet {
   id        Int       @id @unique @default(autoincrement())
-  userId    Int
-  amount    Decimal
+  userId    Int       @map("user_id")
+  amount    Float
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
-  user      User      @relation(fields: [userId], references: [id])
 }
 
 model Notification {
-  id        Int      @id @unique @default(autoincrement())
-  senderId  Int
-  amount    Decimal
-  message   String
-  createdAt DateTime @default(now()) @map("created_at")
-  sender    User     @relation("notification_sender", fields: [senderId], references: [id])
-  recipient User[]   @relation("notification_recipient")
+  id          Int      @id @unique @default(autoincrement())
+  transaction Int
+  recipient   String
+  sender      String
+  amount      Float
+  message     String
+  createdAt   DateTime @default(now()) @map("created_at")
 }

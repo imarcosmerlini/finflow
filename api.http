@@ -3,7 +3,7 @@ POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-  "email": "ronaldo@noreply.com",
+  "email": "luiz@noreply.com",
   "password": "changeme"
 }
 
@@ -21,20 +21,31 @@ POST http://localhost:3000/users
 Content-Type: application/json
 
 {
-  "name": "Ronaldo da Silva",
-  "document": "412414124",
+  "name": "Luiz Henrique",
+  "document": "83110730073",
   "emailNotification": true,
   "smsNotification": true,
-  "type": "Person",
-  "email": "2414214@noreply.com",
+  "type": "company",
+  "email": "luiz@noreply.com",
   "password": "changeme"
 }
 
-### POST wallet
+### POST ADD CREDIT
 POST http://localhost:3000/wallets
 Content-Type: application/json
 
 {
-  "id": 2,
-  "amount": 2.6
+  "id": 3,
+  "amount": 10.40
+}
+
+### POST TRANSACTION
+POST http://localhost:3000/transactions
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "transactionToId": 1,
+  "transactionFromId": 2,
+  "amount": 10.0
 }

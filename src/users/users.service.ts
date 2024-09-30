@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { User, Wallet } from '@prisma/client';
+import { User } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { IUser } from './iuser';
 import { WalletsService } from '../wallets/wallets.service';
@@ -53,9 +53,5 @@ export class UsersService {
         },
       );
     }
-  }
-
-  async addFunds(): Promise<Wallet | undefined> {
-    return undefined;
   }
 }
