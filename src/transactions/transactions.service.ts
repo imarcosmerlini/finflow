@@ -24,51 +24,47 @@ export class TransactionsService {
     transaction: ITransactions,
     tokenData: tokenData,
   ): Promise<ITransactions | any> {
-    try {
-      await this.validateUser(tokenData.id, transaction.transactionFromId);
+    await this.validateUser(tokenData.id, transaction.transactionFromId);
 
-      const userFrom = await this.findUser(transaction.transactionFromId);
-      const userTo = await this.findUser(transaction.transactionToId);
+    const userFrom = await this.findUser(transaction.transactionFromId);
+    const userTo = await this.findUser(transaction.transactionToId);
 
-      await this.validateTypeUser(userFrom.type);
+    await this.validateTypeUser(userFrom.type);
 
-      const newTransaction = await this.prisma.transaction.create({
-        data: transaction,
-      });
+    const newTransaction = await this.prisma.transaction.create({
+      data: transaction,
+    });
 
-      const walletFrom = await this.walletService.findFirst(userFrom.id);
+    const walletFrom = await this.walletService.findFirst(userFrom.id);
 
-      await this.validateFundsWallet(walletFrom.amount, transaction.amount);
+    await this.validateFundsWallet(walletFrom.amount, transaction.amount);
 
-      const validationResponse = await this.validateTransaction();
-      if (validationResponse !== 'Autorizado') {
-        await this.updateTransaction(newTransaction.id, 'unauthorized');
-        await this.errorService.badRequest('Unauthorized transaction');
-      }
-
-      const walletTo = await this.walletService.findFirst(userTo.id);
-
-      const newAmountTo = walletTo.amount + transaction.amount;
-      await this.walletService.updateAmount(walletTo.id, newAmountTo);
-
-      const newAmountFrom = walletFrom.amount - transaction.amount;
-      await this.walletService.updateAmount(walletFrom.id, newAmountFrom);
-
-      await this.updateTransaction(newTransaction.id, 'completed');
-      newTransaction.status = 'completed';
-
-      await this.notificationService.sendNotifications({
-        transaction: newTransaction.id,
-        recipient: userTo.name,
-        sender: userFrom.name,
-        amount: newTransaction.amount,
-        message: `Você transferiu R$ ${newTransaction.amount} para ${userTo.name}`,
-      });
-
-      return newTransaction;
-    } catch (e) {
-      await this.errorService.badRequest(e.message);
+    const validationResponse = await this.validateTransaction();
+    if (validationResponse !== 'Autorizado') {
+      await this.updateTransaction(newTransaction.id, 'unauthorized');
+      await this.errorService.badRequest('Unauthorized transaction');
     }
+
+    const walletTo = await this.walletService.findFirst(userTo.id);
+
+    const newAmountTo = walletTo.amount + transaction.amount;
+    await this.walletService.updateAmount(walletTo.id, newAmountTo);
+
+    const newAmountFrom = walletFrom.amount - transaction.amount;
+    await this.walletService.updateAmount(walletFrom.id, newAmountFrom);
+
+    await this.updateTransaction(newTransaction.id, 'completed');
+    newTransaction.status = 'completed';
+
+    await this.notificationService.sendNotifications({
+      transaction: newTransaction.id,
+      recipient: userTo.name,
+      sender: userFrom.name,
+      amount: newTransaction.amount,
+      message: `Você transferiu R$ ${newTransaction.amount} para ${userTo.name}`,
+    });
+
+    return newTransaction;
   }
 
   async findUser(userId: number): Promise<ITransactions | any> {
