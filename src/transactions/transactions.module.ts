@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma.service';
 import { WalletsService } from '../wallets/wallets.service';
 import { AuthTransactionsService } from '../auth-transactions/auth-transactions.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ErrorsService } from '../errors/errors.service';
 
 @Module({
   controllers: [TransactionsController],
@@ -14,6 +15,7 @@ import { NotificationsService } from '../notifications/notifications.service';
     WalletsService,
     AuthTransactionsService,
     NotificationsService,
+    ErrorsService,
   ],
   exports: [TransactionsService],
 })

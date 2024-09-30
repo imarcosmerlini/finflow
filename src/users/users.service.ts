@@ -1,15 +1,17 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { IUser } from './iuser';
 import { WalletsService } from '../wallets/wallets.service';
+import { ErrorsService } from '../errors/errors.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private prisma: PrismaService,
     private wallet: WalletsService,
+    private errorService: ErrorsService,
   ) {}
   private readonly saltOrRounds = 10;
 
@@ -42,16 +44,7 @@ export class UsersService {
 
       return newUser;
     } else {
-      throw new HttpException(
-        {
-          status: HttpStatus.NOT_FOUND,
-          error: 'User already created',
-        },
-        HttpStatus.NOT_FOUND,
-        {
-          cause: 'User already created',
-        },
-      );
+      await this.errorService.notFound('User already created');
     }
   }
 }

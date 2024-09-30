@@ -1,8 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ITransactions } from './itransactions';
 import { AuthTransactionsService } from '../auth-transactions/auth-transactions.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ErrorsService } from '../errors/errors.service';
 
 @Injectable()
 export class TransactionsService {
@@ -10,6 +11,7 @@ export class TransactionsService {
     private prisma: PrismaService,
     private authTransaction: AuthTransactionsService,
     private notificationService: NotificationsService,
+    private errorService: ErrorsService,
   ) {}
 
   async create(transaction: ITransactions): Promise<ITransactions | any> {
@@ -17,15 +19,8 @@ export class TransactionsService {
     const userTo = await this.findUser(transaction.transactionToId);
 
     if (userFrom.type == 'company') {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: 'Company users cannot transfer currency',
-        },
-        HttpStatus.BAD_REQUEST,
-        {
-          cause: 'Company users cannot transfer currency',
-        },
+      await this.errorService.badRequest(
+        'Company users cannot transfer currency',
       );
     }
 
@@ -37,16 +32,7 @@ export class TransactionsService {
     });
 
     if (walletFrom.amount < transaction.amount) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: 'Insufficient funds',
-        },
-        HttpStatus.BAD_REQUEST,
-        {
-          cause: 'Insufficient funds',
-        },
-      );
+      await this.errorService.badRequest('Insufficient funds');
     }
 
     const authTransaction = await this.authTransaction.validate();
@@ -58,16 +44,7 @@ export class TransactionsService {
         data: { status: 'unauthorized' },
       });
 
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          error: 'Unauthorized transaction',
-        },
-        HttpStatus.BAD_REQUEST,
-        {
-          cause: 'Unauthorized transaction',
-        },
-      );
+      await this.errorService.badRequest('Unauthorized transaction');
     }
 
     const walletTo = await this.prisma.wallet.findFirst({

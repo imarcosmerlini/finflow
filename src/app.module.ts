@@ -8,6 +8,7 @@ import { WalletsModule } from './wallets/wallets.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AuthTransactionsModule } from './auth-transactions/auth-transactions.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ErrorsService } from './errors/errors.service';
 
 @Module({
   imports: [
@@ -22,6 +23,6 @@ import { NotificationsModule } from './notifications/notifications.module';
     NotificationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ErrorsService],
 })
 export class AppModule {}
