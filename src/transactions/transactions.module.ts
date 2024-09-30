@@ -6,6 +6,8 @@ import { WalletsService } from '../wallets/wallets.service';
 import { AuthTransactionsService } from '../auth-transactions/auth-transactions.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ErrorsService } from '../errors/errors.service';
+import { AuthService } from '../auth/auth.service';
+import { UsersService } from '../users/users.service';
 
 @Module({
   controllers: [TransactionsController],
@@ -16,6 +18,8 @@ import { ErrorsService } from '../errors/errors.service';
     AuthTransactionsService,
     NotificationsService,
     ErrorsService,
+    AuthService,
+    UsersService,
   ],
   exports: [TransactionsService],
 })

@@ -26,4 +26,17 @@ export class WalletsService {
 
     return updatedWallet;
   }
+
+  async updateAmount(id: number, amount: number): Promise<Wallet | any> {
+    return this.prisma.wallet.update({
+      where: { id: id },
+      data: { amount: amount },
+    });
+  }
+
+  async findFirst(userId: number): Promise<any> {
+    return this.prisma.wallet.findFirst({
+      where: { userId: userId },
+    });
+  }
 }

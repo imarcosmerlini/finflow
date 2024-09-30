@@ -25,10 +25,15 @@ export class AuthService {
       await this.errorService.unauthorized('Incorrect password');
     }
 
-    const payload = { sub: user.id, email: user.email, type: user.type };
+    const payload = { id: user.id, email: user.email, type: user.type };
 
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
+  }
+
+  decodeToken(token: string) {
+    const decoded = this.jwtService.decode(token);
+    return decoded;
   }
 }

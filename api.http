@@ -1,4 +1,4 @@
-### Send POST request with json body
+### POST to login and set the auth token
 POST http://localhost:3000/auth/login
 Content-Type: application/json
 
@@ -9,20 +9,13 @@ Content-Type: application/json
 
 > {% client.global.set("access_token", response.body.access_token); %}
 
-
-### GET request with a header
-GET http://localhost:3000
-Accept: application/json
-Authorization: Bearer {{access_token}}
-
-
-### Send POST request with json body
+### POST to create a new company user
 POST http://localhost:3000/users
 Content-Type: application/json
 
 {
   "name": "Luiz Henrique",
-  "document": "83110730073",
+  "document": "75072195000184",
   "emailNotification": true,
   "smsNotification": true,
   "type": "company",
@@ -30,7 +23,21 @@ Content-Type: application/json
   "password": "changeme"
 }
 
-### POST ADD CREDIT
+### POST to create a new common user
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "name": "Fernando Pascoal",
+  "document": "95344973047",
+  "emailNotification": true,
+  "smsNotification": true,
+  "type": "person",
+  "email": "fernando@noreply.com",
+  "password": "changeme"
+}
+
+### POST to add credits to an account
 POST http://localhost:3000/wallets
 Content-Type: application/json
 

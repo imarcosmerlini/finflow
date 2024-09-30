@@ -4,6 +4,10 @@ import { ITransactions } from './itransactions';
 import { AuthTransactionsService } from '../auth-transactions/auth-transactions.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ErrorsService } from '../errors/errors.service';
+import { JwtService } from '@nestjs/jwt';
+import { WalletsService } from '../wallets/wallets.service';
+
+type tokenData = { id: number; email: string; type: string };
 
 @Injectable()
 export class TransactionsService {
@@ -12,72 +16,59 @@ export class TransactionsService {
     private authTransaction: AuthTransactionsService,
     private notificationService: NotificationsService,
     private errorService: ErrorsService,
+    private readonly jwtService: JwtService,
+    private walletService: WalletsService,
   ) {}
 
-  async create(transaction: ITransactions): Promise<ITransactions | any> {
-    const userFrom = await this.findUser(transaction.transactionFromId);
-    const userTo = await this.findUser(transaction.transactionToId);
+  async create(
+    transaction: ITransactions,
+    tokenData: tokenData,
+  ): Promise<ITransactions | any> {
+    try {
+      await this.validateUser(tokenData.id, transaction.transactionFromId);
 
-    if (userFrom.type == 'company') {
-      await this.errorService.badRequest(
-        'Company users cannot transfer currency',
-      );
-    }
+      const userFrom = await this.findUser(transaction.transactionFromId);
+      const userTo = await this.findUser(transaction.transactionToId);
 
-    const newTransaction = await this.prisma.transaction.create({
-      data: transaction,
-    });
-    const walletFrom = await this.prisma.wallet.findFirst({
-      where: { userId: userFrom.id },
-    });
+      await this.validateTypeUser(userFrom.type);
 
-    if (walletFrom.amount < transaction.amount) {
-      await this.errorService.badRequest('Insufficient funds');
-    }
-
-    const authTransaction = await this.authTransaction.validate();
-    const messageValue = authTransaction.find((item) => item.message)?.message;
-
-    if (messageValue !== 'Autorizado') {
-      await this.prisma.transaction.update({
-        where: { id: newTransaction.id },
-        data: { status: 'unauthorized' },
+      const newTransaction = await this.prisma.transaction.create({
+        data: transaction,
       });
 
-      await this.errorService.badRequest('Unauthorized transaction');
+      const walletFrom = await this.walletService.findFirst(userFrom.id);
+
+      await this.validateFundsWallet(walletFrom.amount, transaction.amount);
+
+      const validationResponse = await this.validateTransaction();
+      if (validationResponse !== 'Autorizado') {
+        await this.updateTransaction(newTransaction.id, 'unauthorized');
+        await this.errorService.badRequest('Unauthorized transaction');
+      }
+
+      const walletTo = await this.walletService.findFirst(userTo.id);
+
+      const newAmountTo = walletTo.amount + transaction.amount;
+      await this.walletService.updateAmount(walletTo.id, newAmountTo);
+
+      const newAmountFrom = walletFrom.amount - transaction.amount;
+      await this.walletService.updateAmount(walletFrom.id, newAmountFrom);
+
+      await this.updateTransaction(newTransaction.id, 'completed');
+      newTransaction.status = 'completed';
+
+      await this.notificationService.sendNotifications({
+        transaction: newTransaction.id,
+        recipient: userTo.name,
+        sender: userFrom.name,
+        amount: newTransaction.amount,
+        message: `Você transferiu R$ ${newTransaction.amount} para ${userTo.name}`,
+      });
+
+      return newTransaction;
+    } catch (e) {
+      await this.errorService.badRequest(e.message);
     }
-
-    const walletTo = await this.prisma.wallet.findFirst({
-      where: { userId: userTo.id },
-    });
-
-    const newAmountTo = walletTo.amount + transaction.amount;
-    await this.prisma.wallet.update({
-      where: { id: walletTo.id },
-      data: { amount: newAmountTo },
-    });
-
-    const newAmountFrom = walletFrom.amount - transaction.amount;
-    await this.prisma.wallet.update({
-      where: { id: walletFrom.id },
-      data: { amount: newAmountFrom },
-    });
-
-    await this.prisma.transaction.update({
-      where: { id: newTransaction.id },
-      data: { status: 'completed' },
-    });
-    newTransaction.status = 'completed';
-
-    await this.notificationService.sendNotifications({
-      transaction: newTransaction.id,
-      recipient: userTo.name,
-      sender: userFrom.name,
-      amount: newTransaction.amount,
-      message: `Você transferiu R$ ${newTransaction.amount} para ${userTo.name}`,
-    });
-
-    return newTransaction;
   }
 
   async findUser(userId: number): Promise<ITransactions | any> {
@@ -85,6 +76,43 @@ export class TransactionsService {
       where: {
         id: userId,
       },
+    });
+  }
+
+  async validateUser(userId: number, transactionUserId: number): Promise<any> {
+    if (userId !== transactionUserId) {
+      await this.errorService.badRequest(
+        'Authenticated user and sender user are not the same',
+      );
+    }
+  }
+
+  async validateTypeUser(type: string): Promise<any> {
+    if (type == 'company') {
+      await this.errorService.badRequest(
+        'Company users cannot transfer currency',
+      );
+    }
+  }
+
+  async validateFundsWallet(
+    walletFunds: number,
+    transactionValue: number,
+  ): Promise<any> {
+    if (walletFunds < transactionValue) {
+      await this.errorService.badRequest('Insufficient funds');
+    }
+  }
+
+  async validateTransaction(): Promise<any> {
+    const authTransaction = await this.authTransaction.validate();
+    return authTransaction.find((item) => item.message)?.message;
+  }
+
+  async updateTransaction(id: number, status: string): Promise<any> {
+    await this.prisma.transaction.update({
+      where: { id: id },
+      data: { status: status },
     });
   }
 }
